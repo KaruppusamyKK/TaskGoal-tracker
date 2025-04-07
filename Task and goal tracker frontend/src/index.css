@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap');
+
+body, html, * {
+  font-family: 'Poppins', sans-serif;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.modal, .modal-content, .modal-header, .modal-body, .modal-footer {
+  font-family: 'Poppins', sans-serif !important;
+}
+
+table, th, td {
+  font-family: 'Poppins', sans-serif I !important;
+}
+
+
