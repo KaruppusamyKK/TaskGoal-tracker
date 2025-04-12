@@ -1,7 +1,10 @@
 package com.trackIt.api.controller;
-import com.trackIt.api.dto.request.TaskUpdateRequest;
+
+import com.trackIt.api.dto.request.AssigneeRequest;
+import com.trackIt.api.dto.request.TaskRequest;
 import com.trackIt.api.dto.response.ResponseHandler;
 import com.trackIt.api.model.Task;
+import com.trackIt.api.service.NotificationService;
 import com.trackIt.api.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,15 +20,18 @@ import java.util.Map;
 public class TaskController {
 
     private final TaskService taskService;
+    private final NotificationService notificationService;
+
 
     @PostMapping("/createTask")
-    public ResponseEntity<?> createTask(@RequestBody Task task) {
-        return ResponseHandler.handleResponse(() -> taskService.createTask(task));
+    public ResponseEntity<?> createTask(@RequestBody TaskRequest taskRequest) {
+        logger.info("Creating task with request {} ", taskRequest);
+        return ResponseHandler.handleResponse(() -> taskService.createTask(taskRequest));
     }
 
     @GetMapping("/listTasks")
     public ResponseEntity<?> listTasks() {
-        return ResponseHandler.handleResponse(() -> taskService.listTasks());
+        return ResponseHandler.handleResponse(taskService::listTasks);
     }
 
     @GetMapping("/listTask/Id")
@@ -47,9 +53,18 @@ public class TaskController {
     @PostMapping("/deleteTaskById")
     public ResponseEntity<?> deleteTaskById(@RequestBody Map<String, String> request) {
         String taskId = request.get("taskId");
-        logger.info("TaskID {} ",taskId);
         return ResponseHandler.handleResponse(() -> taskService.deleteTaskById(taskId));
     }
 
 
+    @PostMapping("/updateAssignee")
+    public ResponseEntity<?> updateAssignee(@RequestBody AssigneeRequest assigneeRequest) {
+        logger.info("Request to update assignee {} ", assigneeRequest);
+        ResponseEntity<?> response = ResponseHandler.handleResponse(() -> taskService.updateAssignee(assigneeRequest));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            logger.info("Assignee update success !!!! ");
+            notificationService.saveUserNotifications(assigneeRequest);
+        }
+        return response;
+    }
 }

@@ -19,5 +19,7 @@ export const API_ENDPOINTS = {
   DELETE_NOTIFICATION : `${API_BASE_URL}/api/notify/deleteNotification`,
   CREATE_PROJECT : `${API_BASE_URL}/api/project/createProject`,
   GET_PROJECTS : `${API_BASE_URL}/api/project/listAllProjects`,
+  UPDATE_PROJECT : `${API_BASE_URL}/api/project/updateProjectDetails`,
+
 
 };

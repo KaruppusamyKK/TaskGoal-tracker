@@ -1,4 +1,5 @@
 package com.trackIt.api.model;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -32,6 +33,7 @@ public class Chat {
     private String taskId;
 
     @ManyToOne
+    @JsonBackReference
     @JoinColumn(name = "task_ref")
     private Task task;
 

@@ -8,6 +8,7 @@ import {
   Clock, CheckCircle, PauseCircle, XCircle, AlertTriangle, FlaskConical, Rocket, Bug, Upload,
 } from "lucide-react";
 import ToastService from "../components/ToastService.js";
+import ProjectSection from '../pages/ProjectSection.js';
 
 
 const SidebarLink = ({ icon: Icon, children, onClick }) => (
@@ -26,9 +27,12 @@ export default function TaskManagementApp({ count, assigneeList }) {
   const navigate = useNavigate();
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [projects, setProjects] = useState([]);
+  const [openViewOrEditProject, setOpenViewOrEditProject] = useState(false);
+  const [selectedProject, setSelectedProject] = useState({});
   const [notificationCount, setNotificationCount] = useState(
     () => parseInt(localStorage.getItem("notificationCount")) || 0
   );
+
 
 
   useEffect(() => {
@@ -121,7 +125,7 @@ export default function TaskManagementApp({ count, assigneeList }) {
     const minutes = String(now.getMinutes()).padStart(2, "0");
     const seconds = String(now.getSeconds()).padStart(2, "0");
     const milliseconds = String(now.getMilliseconds()).padStart(3, "0");
-    const microseconds = `${milliseconds}000`; // add 3 zeros to get 6 digits
+    const microseconds = `${milliseconds}000`;
 
     return `${dateStr}T${hours}:${minutes}:${seconds}.${microseconds}`;
   };
@@ -183,6 +187,13 @@ export default function TaskManagementApp({ count, assigneeList }) {
     }
   };
 
+  const triggerViewOrEditProject = (project) => {
+    console.log(project)
+    setSelectedProject(project);
+    setOpenViewOrEditProject(true);
+  }
+
+
 
 
   return (
@@ -197,7 +208,7 @@ export default function TaskManagementApp({ count, assigneeList }) {
 
         <nav className="space-y-1">
           <SidebarLink icon={Icons.Home} onClick={() => navigate("/home")}>Dashboard</SidebarLink>
-          <SidebarLink icon={Icons.CheckCircle2} onClick={() => navigate("/my-tasks")}>My Tasks</SidebarLink>
+          {/* <SidebarLink icon={Icons.CheckCircle2} onClick={() => navigate("/my-tasks")}>My Tasks</SidebarLink> */}
           <SidebarLink icon={Icons.Bell} onClick={handleNotificationsClick}>
             Notification
             {notificationCount > 0 && (
@@ -230,7 +241,7 @@ export default function TaskManagementApp({ count, assigneeList }) {
                     .toUpperCase()}
                 </div>
 
-                <span className="text-xs font-medium">{project.projectName}</span>
+                <span onClick={() => triggerViewOrEditProject(project)} className="text-xs font-medium">{project.projectName}</span>
               </div>
             ))}
           </div>
@@ -408,6 +419,16 @@ export default function TaskManagementApp({ count, assigneeList }) {
           </div>
         </div>
       )}
+
+
+      {openViewOrEditProject && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-lg relative">
+            <ProjectSection selectedProject={selectedProject} onClose={() => setOpenViewOrEditProject(false)} showProjectModal={true} />
+          </div>
+        </div>
+      )}
+
 
 
     </div>

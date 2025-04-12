@@ -1,6 +1,8 @@
 package com.trackIt.api.model;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,6 +10,8 @@ import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -28,7 +32,6 @@ public class Task {
     private String taskName;
     private String priority;
     private LocalDateTime timestamp;
-    private String assignee;
     private String assigner;
     private String status;
     private BigInteger timeEstimate;
@@ -44,21 +47,16 @@ public class Task {
     }
 
 
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Chat> chats;
 
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<TaskAssignee> taskAssignees;
 
-    //    @OneToMany(mappedBy = "task",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
-//    @JsonManagedReference
-//    private List<TaskResources> taskResourcesList = new ArrayList<>();
-//
-//    @JsonBackReference
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "iteration_id", referencedColumnName = "id")
-//    private Iteration iteration;
-//
-//
-//    @OneToMany(mappedBy = "task",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
-//    @JsonManagedReference
-//    private List<Chat> chatList = new ArrayList<>();
-
+    @ManyToOne
+    @JoinColumn(name = "project_ref")
+    private Project project;
 
 }

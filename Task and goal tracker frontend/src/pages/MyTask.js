@@ -10,6 +10,7 @@ import {
     MoreHorizontal,
     ChevronDown,
     MessageSquare,
+    Inbox,
 } from "lucide-react";
 import SideBar from './Sidebar.js';
 import { CheckCircle, PauseCircle, XCircle, CalendarX2, AlertTriangle, FlaskConical, Rocket, Bug, Upload } from "lucide-react";
@@ -88,18 +89,18 @@ export default function TaskTracker() {
 
     const fetchTasks = async () => {
         try {
-          const responseMessage = await ApiService.listTasksByUser(localStorage.getItem("user"));
-          if (Array.isArray(responseMessage) && responseMessage.length > 0) {
-            setTasks(responseMessage);
-          } else {
-            setTasks([]);
-          }
+            const responseMessage = await ApiService.listTasksByUser(localStorage.getItem("user"));
+            if (Array.isArray(responseMessage) && responseMessage.length > 0) {
+                setTasks(responseMessage);
+            } else {
+                setTasks([]);
+            }
         } catch (error) {
-          console.log(error);
-          setTasks([]);
+            console.log(error);
+            setTasks([]);
         }
-      };
-      
+    };
+
 
 
     const fetchEmployees = async () => {
@@ -262,7 +263,7 @@ export default function TaskTracker() {
                 ? [...prevAssignees, value]
                 : prevAssignees.filter((a) => a !== value);
 
-                
+
 
             const assigneeStatus = {
                 taskId: prev.taskId,
@@ -353,7 +354,7 @@ export default function TaskTracker() {
     const overdueTasks = tasks.filter(
         t =>
             t.dueDate &&
-            new Date(t.dueDate) < new Date() && 
+            new Date(t.dueDate) < new Date() &&
             ["In Progress", "Not Started", "Needs Rework", "Testing"].includes(t.status) // Only these statuses
     ).length;
 
@@ -456,60 +457,76 @@ export default function TaskTracker() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {tasks.map((task, index) => (
-                                                    <tr
-                                                        key={task.id || index}
-                                                        className="border-t cursor-pointer hover:bg-gray-50"
-                                                        onClick={() => handleOpenTask(task)}
-                                                    >
-                                                        <td className="px-4 py-3 text-sm font-medium group relative">
-                                                            {task.taskName.length > 50 ? `${task.taskName.slice(0, 45)}...` : task.taskName}
-
-                                                            {task.taskName.length > 50 && (
-                                                                <span className="absolute left-0 -top-8 w-max p-2 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
-                                                                    {task.taskName}
-                                                                </span>
-                                                            )}
-                                                        </td>
-
-                                                        <td className="px-4 py-3 text-sm">
-                                                            <div className="flex -space-x-2">
-                                                                {task.assignee.map((assignee, index) => (
-                                                                    <AssigneeAvatar key={index} name={assignee} />
-                                                                ))}
+                                                {tasks.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="8" className="px-4 py-6 text-center text-sm text-gray-500">
+                                                            <div className="flex flex-col items-center justify-center space-y-2">
+                                                                <Inbox className="h-6 w-6 text-gray-400" />
+                                                                <span>No tasks found.</span>
                                                             </div>
-                                                        </td>
-
-                                                        <td className="px-4 py-3 text-sm">{task.assigner}</td>
-
-                                                        <td className="px-4 py-3 text-sm">
-                                                            <div className="flex items-center">
-                                                                {statusIcons[task.status]}
-                                                                <span className="ml-[1px]">{task.status}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-3 text-sm">
-                                                            <div className="flex items-center">
-                                                                {priorityIcons[task.priority]}
-                                                                <span className="ml-[1px]">{task.priority}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-3 text-sm">{formatDate(task.startDate)}</td>
-                                                        <td className="px-4 py-3 text-sm">{formatDate(task.dueDate)}</td>
-                                                        <td className="px-4 py-3 text-sm text-right">
-                                                            <button
-                                                                className="p-1 rounded-full hover:bg-gray-200"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleOpenTask(task);
-                                                                }}
-                                                            >
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </button>
                                                         </td>
                                                     </tr>
-                                                ))}
+                                                ) : (
+                                                    tasks.map((task, index) => (
+                                                        <tr
+                                                            key={task.id || index}
+                                                            className="border-t cursor-pointer hover:bg-gray-50"
+                                                            onClick={() => handleOpenTask(task)}
+                                                        >
+                                                            <td className="px-4 py-3 text-sm font-medium group relative">
+                                                                {task.taskName.length > 50
+                                                                    ? `${task.taskName.slice(0, 45)}...`
+                                                                    : task.taskName}
+
+                                                                {task.taskName.length > 50 && (
+                                                                    <span className="absolute left-0 -top-8 w-max p-2 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
+                                                                        {task.taskName}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+
+                                                            <td className="px-4 py-3 text-sm">
+                                                                <div className="flex -space-x-2">
+                                                                    {task.assignee.map((assignee, index) => (
+                                                                        <AssigneeAvatar key={index} name={assignee} />
+                                                                    ))}
+                                                                </div>
+                                                            </td>
+
+                                                            <td className="px-4 py-3 text-sm">{task.assigner}</td>
+
+                                                            <td className="px-4 py-3 text-sm">
+                                                                <div className="flex items-center">
+                                                                    {statusIcons[task.status]}
+                                                                    <span className="ml-[1px]">{task.status}</span>
+                                                                </div>
+                                                            </td>
+
+                                                            <td className="px-4 py-3 text-sm">
+                                                                <div className="flex items-center">
+                                                                    {priorityIcons[task.priority]}
+                                                                    <span className="ml-[1px]">{task.priority}</span>
+                                                                </div>
+                                                            </td>
+
+                                                            <td className="px-4 py-3 text-sm">{formatDate(task.startDate)}</td>
+                                                            <td className="px-4 py-3 text-sm">{formatDate(task.dueDate)}</td>
+                                                            <td className="px-4 py-3 text-sm text-right">
+                                                                <button
+                                                                    className="p-1 rounded-full hover:bg-gray-200"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleOpenTask(task);
+                                                                    }}
+                                                                >
+                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
                                             </tbody>
+
                                         </table>
                                     </div>
 
@@ -813,18 +830,18 @@ export default function TaskTracker() {
 
                                     </div>
                                 </div>
-                            ) : selectedTask ? 
-                                          (
-                                            <div className="mt-6 p-4 border rounded-lg shadow-lg">
-                                              <TaskDetails 
-                                                selectedTask={selectedTask} 
-                                                handleAddComment={handleAddComment} 
-                                                handleEditTask={handleEditTask} 
-                                                handleDeleteTask={handleDeleteTask}
-                                                isMyTask={true} 
-                                              />
-                                            </div>
-                                          ) : null}
+                            ) : selectedTask ?
+                                (
+                                    <div className="mt-6 p-4 border rounded-lg shadow-lg">
+                                        <TaskDetails
+                                            selectedTask={selectedTask}
+                                            handleAddComment={handleAddComment}
+                                            handleEditTask={handleEditTask}
+                                            handleDeleteTask={handleDeleteTask}
+                                            isMyTask={true}
+                                        />
+                                    </div>
+                                ) : null}
                         </div>
                     </div>
                 </div>

@@ -10,10 +10,10 @@ const AssigneeAvatar = ({ name }) => (
   </div>
 );
 
-export default function TaskDetails({ 
-  selectedTask, 
-  handleAddComment, 
-  handleEditTask, 
+export default function TaskDetails({
+  selectedTask,
+  handleAddComment,
+  handleEditTask,
   handleDeleteTask,
   isMyTask
 }) {
@@ -36,18 +36,18 @@ export default function TaskDetails({
   };
 
   // Calculate progress percentage based on time tracked vs estimate
-  const progressPercentage = selectedTask.timeEstimate 
-    ? Math.min(100, (selectedTask.timeTracked / selectedTask.timeEstimate) * 100) 
+  const progressPercentage = selectedTask.timeEstimate
+    ? Math.min(100, (selectedTask.timeTracked / selectedTask.timeEstimate) * 100)
     : 0;
 
   // Format dates for better display
   const formatDate = (dateString) => {
     if (!dateString) return "Not set";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
     });
   };
 
@@ -64,27 +64,25 @@ export default function TaskDetails({
       {/* Header with status and actions */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-gray-100">
         <div className="flex flex-wrap items-center gap-3">
-          <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-            selectedTask.status === "Done" ? "bg-green-100 text-green-800" :
+          <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${selectedTask.status === "Done" ? "bg-green-100 text-green-800" :
             selectedTask.status === "In Progress" ? "bg-amber-100 text-amber-800" :
-            selectedTask.status === "Blocked" ? "bg-red-100 text-red-800" :
-            "bg-gray-100 text-gray-800"
-          }`}>
+              selectedTask.status === "Blocked" ? "bg-red-100 text-red-800" :
+                "bg-gray-100 text-gray-800"
+            }`}>
             {statusIcons[selectedTask.status]}
             <span className="ml-1.5">{selectedTask.status}</span>
           </div>
 
-          <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-            selectedTask.priority === "High" || selectedTask.priority === "Urgent" 
-              ? "bg-red-100 text-red-800" 
-              : selectedTask.priority === "Medium" 
-                ? "bg-amber-100 text-amber-800" 
-                : "bg-blue-100 text-blue-800"
-          }`}>
+          <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${selectedTask.priority === "High" || selectedTask.priority === "Urgent"
+            ? "bg-red-100 text-red-800"
+            : selectedTask.priority === "Medium"
+              ? "bg-amber-100 text-amber-800"
+              : "bg-blue-100 text-blue-800"
+            }`}>
             {priorityIcons[selectedTask.priority]}
             <span className="ml-1.5">{selectedTask.priority} Priority</span>
           </div>
-          
+
           {isOverdue() && (
             <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
               <AlertCircle className="h-3.5 w-3.5 mr-1" />
@@ -117,30 +115,49 @@ export default function TaskDetails({
 
       {/* Task name - highlighted as the main element */}
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">{selectedTask.taskName}</h2>
-        
-        {/* Assignees with improved avatar display */}
+      <div className="flex items-center justify-between mb-2">
+  <h2 className="text-xl font-semibold text-gray-900">
+    {selectedTask.taskName}
+  </h2>
+
+  {selectedTask.projectName && (
+    <div className="flex items-center space-x-2 group relative cursor-pointer">
+      <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold shadow">
+        {selectedTask.projectName
+          .split(" ")
+          .map(word => word[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase()}
+      </div>
+
+      <span className="text-sm font-medium text-gray-700">
+        {selectedTask.projectName}
+      </span>
+
+      <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-all z-10 shadow-md">
+        This is the project you're assigned to.
+      </span>
+    </div>
+  )}
+</div>
+
+
         <div className="flex items-center mt-3">
           <User className="h-4 w-4 text-gray-500 mr-2" />
           <span className="text-sm font-medium text-gray-500 mr-3">Assignees:</span>
           <div className="flex -space-x-2 overflow-hidden">
-            {/* {selectedTask.assignees.map((assignee, index) => (
-              <div key={index} className="relative z-0 hover:z-10 transition-transform hover:scale-110">
-                <AssigneeAvatar name={assignee} />
-              </div>
-            ))} */}
             {(isMyTask ? [selectedTask.assignee] : selectedTask.assignees || [])
-  .flat()
-  .map((assignee, index) => (
-    <div key={index} className="relative z-0 hover:z-10 transition-transform hover:scale-110">
-      <AssigneeAvatar name={String(assignee)} />
-    </div>
-  ))}
-
-
+              .flat()
+              .map((assignee, index) => (
+                <div key={index} className="relative z-0 hover:z-10 transition-transform hover:scale-110">
+                  <AssigneeAvatar name={String(assignee)} />
+                </div>
+              ))}
           </div>
         </div>
       </div>
+
 
       {/* Task details in a card-like layout */}
       <div className="space-y-6">
@@ -159,15 +176,15 @@ export default function TaskDetails({
             <Timer className="h-4 w-4 mr-2 text-gray-500" />
             Time Tracking
           </div>
-          
+
           <div className="mb-2 flex justify-between text-xs text-gray-500">
             <span>{selectedTask.timeTracked} hr spent</span>
             <span>{selectedTask.timeEstimate} hr estimated</span>
           </div>
-          
+
           <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div 
-              className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out" 
+            <div
+              className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
@@ -182,7 +199,7 @@ export default function TaskDetails({
             </div>
             <p className="text-gray-700">{formatDate(selectedTask.startDate)}</p>
           </div>
-          
+
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex items-center text-sm font-medium text-gray-700 mb-2">
               <Calendar className="h-4 w-4 mr-2 text-gray-500" />

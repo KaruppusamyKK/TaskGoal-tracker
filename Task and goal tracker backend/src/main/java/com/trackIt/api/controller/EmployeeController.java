@@ -18,7 +18,7 @@ public class EmployeeController {
 
     @GetMapping("/getEmployees")
     public ResponseEntity<?> getEmployees(){
-        return ResponseHandler.handleResponse(() -> employeeService.getEmployees());
+        return ResponseHandler.handleResponse(employeeService::getEmployees);
     }
 
 

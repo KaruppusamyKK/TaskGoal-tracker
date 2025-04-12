@@ -8,12 +8,14 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="Track-It" />
+        <module name="Track-it" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="Track-It" options="-parameters" />
+      <module name="Track-it" options="-parameters" />
     </option>
   </component>
 </project>

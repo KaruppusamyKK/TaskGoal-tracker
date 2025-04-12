@@ -46,4 +46,5 @@ export const ApiService = {
   deleteNotification: (notificationId) => api.post(`${API_ENDPOINTS.DELETE_NOTIFICATION}?notificationId=${notificationId}`, {}),
   createProject: (projectRequest) => api.post(API_ENDPOINTS.CREATE_PROJECT, projectRequest),
   getProjects: () => api.get(API_ENDPOINTS.GET_PROJECTS),
+  updateProject: (project, projectId) => api.post(API_ENDPOINTS.UPDATE_PROJECT, project, { params: { projectId } }),
 };

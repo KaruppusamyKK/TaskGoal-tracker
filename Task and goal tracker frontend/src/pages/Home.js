@@ -6,6 +6,12 @@ import {
   Plus, Clock, ListTodo, MoreHorizontal, ChevronDown,
   CheckCircle, PauseCircle, XCircle, AlertTriangle, FlaskConical, Rocket, Bug, Upload,
   Flag, FlagTriangleLeft, FlagTriangleRight,
+  Search,
+  User,
+  Filter,
+  X,
+  ListRestart,
+  Folder,
 } from "lucide-react";
 import CommentDialog from "./ChatWindow.js";
 import TaskManagementApp from "./Sidebar.js";
@@ -32,11 +38,18 @@ export default function TaskTracker() {
   const { openNotificationTask, selectedTaskName, openOpenNotificationTask, setSelectedTaskName } = useOpenTask();
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(0);
-  const tasksPerPage = 5;
+  const [projectNames, setProjectNames] = useState([]);
+  const tasksPerPage = 10;
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState("");
+  const [assigneeFilter, setAssigneeFilter] = useState("");
+  const [projectFilter, setProjectFilter] = useState("");
+
 
   const offset = currentPage * tasksPerPage;
-  const currentTasks = tasks.slice(offset, offset + tasksPerPage);
-  const pageCount = Math.ceil(tasks.length / tasksPerPage);
+  var currentTasks = tasks.slice(offset, offset + tasksPerPage);
+  var pageCount = Math.ceil(tasks.length / tasksPerPage);
 
   useEffect(() => {
     if (openNotificationTask && selectedTaskName && tasks.length > 0) {
@@ -56,7 +69,7 @@ export default function TaskTracker() {
   const [currentTask, setCurrentTask] = useState({
     taskName: "", assignee: [], description: "", status: "Not Started",
     timeTracked: "", timeEstimate: "", priority: "Medium",
-    startDate: "", dueDate: ""
+    startDate: "", dueDate: "", projectName: "",
   });
 
 
@@ -93,7 +106,24 @@ export default function TaskTracker() {
   useEffect(() => {
     fetchEmployees();
     fetchTasks();
+    getProjects();
   }, []);
+
+
+  const getProjects = async () => {
+    try {
+      const responseMessage = await ApiService.getProjects();
+      const namesArray = [];
+      responseMessage.data.forEach(project => {
+        namesArray.push(project.projectName);
+      });
+      setProjectNames(namesArray);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -152,6 +182,7 @@ export default function TaskTracker() {
       priority: "",
       startDate: "",
       dueDate: "",
+      projectName: ""
     });
     setIsDialogOpen(true);
   };
@@ -211,6 +242,7 @@ export default function TaskTracker() {
   const handleSaveTask = async () => {
     const formattedTask = {
       description: currentTask.description || "",
+      projectName: currentTask.projectName || "",
       taskName: currentTask.taskName || "",
       priority: currentTask.priority || "",
       assignee: Array.isArray(currentTask.assignee) ? currentTask.assignee : [],
@@ -357,11 +389,13 @@ export default function TaskTracker() {
 
         changeAssigneeStatus(assigneeStatus);
         setTargetAssigneeForNotification((prevList) => [...prevList, [value]]);
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       }
 
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+
 
       return { ...prev, [field]: newAssignees };
     });
@@ -400,16 +434,53 @@ export default function TaskTracker() {
     const completed = getTaskCountByStatus("Completed");
     const deployed = getTaskCountByStatus("Deployed");
     return tasks.length > 0 ? Math.round(((completed + deployed) / tasks.length) * 100) : 0;
+  }; const filterTasksBySearch = (tasks, term) => {
+    if (!term) return tasks;
+    return tasks.filter((task) =>
+      (task.taskName && task.taskName.toLowerCase().includes(term.toLowerCase())) ||
+      (task.description && task.description.toLowerCase().includes(term.toLowerCase()))
+    );
   };
+
+  const filterTasksByStatusPriorityAssignee = (tasks) => {
+    return tasks.filter((task) => {
+      const statusMatch = statusFilter ? task.status === statusFilter : true;
+      const priorityMatch = priorityFilter ? task.priority === priorityFilter : true;
+      const assigneeMatch = assigneeFilter
+        ? assigneeFilter === "Unassigned"
+          ? !task.assignees || task.assignees.length === 0
+          : task.assignees?.includes(assigneeFilter)
+        : true;
+      return statusMatch && priorityMatch && assigneeMatch;
+    });
+  };
+
+  const filterTasksByProject = (tasks) => {
+    return tasks.filter((task) => {
+      const projectMatch = projectFilter ? task.projectName.toLowerCase() === projectFilter.toLowerCase() : true;
+      return projectMatch;
+    });
+  };
+
+  const paginateTasks = (filtered, currentPage, itemsPerPage) => {
+    const start = currentPage * itemsPerPage;
+    return filtered.slice(start, start + itemsPerPage);
+  };
+
+  const filteredTasks = filterTasksByProject(
+    filterTasksByStatusPriorityAssignee(
+      filterTasksBySearch(tasks, searchTerm)
+    )
+  );
+
+  currentTasks = paginateTasks(filteredTasks, currentPage, 10);
+  pageCount = Math.ceil(filteredTasks.length / 10);
+
 
   return (
     <div className="flex h-screen bg-white">
-      {/* Sidebar */}
       <TaskManagementApp count={notificationCount} assigneeList={targetAssigneeForNotification} />
-
-      {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
         <header className="border-b px-6 py-3 flex items-center justify-between bg-white">
           <div className="flex items-center gap-2">
             <button className="md:hidden p-2 rounded-md border border-gray-200">
@@ -419,7 +490,6 @@ export default function TaskTracker() {
               <h1 className="font-bold">
                 <span className="text-[rgb(37_99_235)]">Task</span><span className="text-black" style={{ marginLeft: '0px' }}>Flow</span>
               </h1>
-
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -433,10 +503,8 @@ export default function TaskTracker() {
           </div>
         </header>
 
-        {/* Dashboard content */}
         <div className="flex-1 overflow-auto p-6">
           <div className="grid gap-6">
-            {/* Stats cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white p-4 rounded-lg border shadow-sm">
                 <div className="text-sm font-medium text-gray-500 mb-1">Total Tasks</div>
@@ -471,21 +539,123 @@ export default function TaskTracker() {
                 </p>
               </div>
             </div>
-
-
             <div>
-
-
-
               <div className="mt-4">
                 <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
                   <div className="p-4 border-b">
-                    <h2 className="text-lg font-semibold">Recent Tasks</h2>
+                    <h2 className="text-lg font-semibold">Tasks</h2>
                     <p className="text-sm text-gray-500">Click on a task to view and edit details</p>
                   </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="relative w-full max-w-xs">
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search tasks..."
+                        className="pl-4 pr-10 py-2 text-sm rounded-full border border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-blue-200 outline-none w-full"
+                      />
+                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    </div>
+
+                    <div className="relative">
+                      <select
+                        value={projectFilter}
+                        onChange={(e) => setProjectFilter(e.target.value)}
+                        className="pl-4 pr-10 py-2 text-sm rounded-full border border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-blue-200 appearance-none outline-none"
+                      >
+                        <option value="">All Projects</option>
+                        {projectNames.map((project, idx) => (
+                          <option key={idx} value={project}>
+                            🗂️ {project}
+                          </option>
+                        ))}
+                      </select>
+                      <Folder className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    </div>
+
+                    <div className="relative">
+                      <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="pl-4 pr-10 py-2 text-sm rounded-full border border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-blue-200 appearance-none outline-none"
+                      >
+                        <option value="">All Status</option>
+                        <option value="Not Started">⏳ Not Started</option>
+                        <option value="In Progress">🌀 In Progress</option>
+                        <option value="On Hold">⏸️ On Hold</option>
+                        <option value="Not Taken">❓ Not Taken</option>
+                        <option value="Needs Rework">🔄 Needs Rework</option>
+                        <option value="Testing">🧪 Testing</option>
+                        <option value="Completed">✅ Completed</option>
+                        <option value="Live Testing">🌐 Live Testing</option>
+                        <option value="Deployed">🚀 Deployed</option>
+                      </select>
+                      <Filter className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    </div>
+
+                    <div className="relative">
+                      <select
+                        value={priorityFilter}
+                        onChange={(e) => setPriorityFilter(e.target.value)}
+                        className="pl-4 pr-10 py-2 text-sm rounded-full border border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-blue-200 appearance-none outline-none"
+                      >
+                        <option value="">All Priority</option>
+                        <option value="High">🚩 High</option>
+                        <option value="Medium">⚑ Medium</option>
+                        <option value="Low">🏁 Low</option>
+                      </select>
+                      <Flag className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    </div>
+
+                    <div className="relative">
+                      <select
+                        value={assigneeFilter}
+                        onChange={(e) => setAssigneeFilter(e.target.value)}
+                        className="pl-4 pr-10 py-2 text-sm rounded-full border border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-blue-200 appearance-none outline-none"
+                      >
+                        <option value="">All Assignees</option>
+                        {Array.from(new Set(tasks.flatMap((task) => task.assignees || []))).map((assignee, idx) => (
+                          <option key={idx} value={assignee}>👤 {assignee}</option>
+                        ))}
+                        <option value="Unassigned">❌ Unassigned Task</option>
+                      </select>
+                      <User className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    </div>
+
+                    <div className="flex items-center gap-1 cursor-pointer text-sm text-gray-500 hover:text-red-500">
+                      <ListRestart
+                        className="h-4 w-4"
+                        onClick={() => {
+                          setAssigneeFilter('');
+                          setStatusFilter('');
+                          setPriorityFilter('');
+                          setSearchTerm('');
+                          setProjectFilter('');
+                          window.location.reload();
+                        }}
+                      />
+                      <span
+                        onClick={() => {
+                          setAssigneeFilter('');
+                          setStatusFilter('');
+                          setPriorityFilter('');
+                          setSearchTerm('');
+                          setProjectFilter('');
+                        }}
+                      >
+                        Reset Filters
+                      </span>
+                    </div>
+                  </div>
+
+
+
                   <div className="overflow-x-auto">
-                    {tasks.length > 0 ? (
+                    {filteredTasks.length > 0 ? (
+
                       <>
+
                         <table className="w-full">
                           <thead>
                             <tr className="bg-gray-50 text-left">
@@ -494,9 +664,8 @@ export default function TaskTracker() {
                               <th className="px-4 py-3 text-sm font-medium text-gray-500">Assigner</th>
                               <th className="px-4 py-3 text-sm font-medium text-gray-500">Status</th>
                               <th className="px-4 py-3 text-sm font-medium text-gray-500">Priority</th>
-                              <th className="px-4 py-3 text-sm font-medium text-gray-500">Start Date</th>
-                              <th className="px-4 py-3 text-sm font-medium text-gray-500">Due Date</th>
-                              <th className="px-4 py-3 text-sm font-medium text-gray-500 text-right">Actions</th>
+                              <th className="px-4 py-3 text-sm font-medium text-gray-500">Start & End date</th>
+                              <th className="px-4 py-3 text-sm font-medium text-gray-500">Project</th>
                             </tr>
                           </thead>
 
@@ -545,23 +714,19 @@ export default function TaskTracker() {
                                     <span className="ml-[1px]">{task.priority}</span>
                                   </div>
                                 </td>
-                                <td className="px-4 py-3 text-sm">{formatDate(task.dueDate)}</td>
-                                <td className="px-4 py-3 text-sm">{formatDate(task.startDate)}</td>
-                                <td className="px-4 py-3 text-sm text-right">
-                                  <button
-                                    className="p-1 rounded-full hover:bg-gray-200"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleOpenTask(task);
-                                    }}
-                                  >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </button>
+                                <td className="px-4 py-3 text-sm">
+                                  {task.startDate && task.dueDate ? (
+                                    <span>{formatDate(task.startDate)} to {formatDate(task.dueDate)}</span>
+                                  ) : (
+                                    <span>-</span>
+                                  )}
                                 </td>
+                                <td className="px-4 py-3 text-sm">{task.projectName}</td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
+
 
 
                         <div className="mt-4 flex justify-end">
@@ -581,7 +746,10 @@ export default function TaskTracker() {
 
                       </>
                     ) : (
-                      <div className="p-4 text-center text-gray-500">No tasks found</div>
+                      <div className="p-4 text-center text-gray-500 flex items-center justify-center space-x-2">
+                        <Search className="h-5 w-5 text-gray-400" />
+                        <span>No tasks found</span>
+                      </div>
                     )}
 
                   </div>
@@ -689,6 +857,7 @@ export default function TaskTracker() {
                       </div>
                     )}
                   </div>
+
                   <div className="grid grid-cols-4 items-center gap-4">
                     <label htmlFor="description" className="text-right text-sm font-medium text-gray-500">
                       Description
@@ -701,6 +870,25 @@ export default function TaskTracker() {
                       className="col-span-3 h-9 rounded-md border border-gray-200 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label htmlFor="projectName" className="text-right text-sm font-medium text-gray-500">
+                      Project Name
+                    </label>
+                    <select
+                      id="projectName"
+                      value={currentTask.projectName}
+                      onChange={(e) => handleInputChange("projectName", e.target.value)}
+                      className="col-span-3 h-9 rounded-md border border-gray-200 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="" disabled>Select Associated Project</option>
+                      {projectNames.map((name, index) => (
+                        <option key={index} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="grid grid-cols-4 items-center gap-4">
                     <label htmlFor="status" className="text-right text-sm font-medium text-gray-500">
                       Status
@@ -886,6 +1074,7 @@ export default function TaskTracker() {
                           !currentTask.priority ||
                           !currentTask.timeEstimate ||
                           !currentTask.startDate ||
+                          !currentTask.projectName ||
                           !currentTask.dueDate
                         )
                       }
